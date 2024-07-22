@@ -10,7 +10,13 @@ const registerUser = async(req,res,next)=>{
             password
         });
         await newUser.save();
-        res.status(201).json(newUser);
+        res.status(200).send({
+            message : "User Created",
+            id : newUser.id,
+            firstName : newUser.firstName,
+            lastName : newUser.lastName,
+            emailAddress : newUser.emailAddress
+        });
     }catch(err){
         res.status(500).json({ message: err.message });
     }
