@@ -47,6 +47,7 @@ router.get('/google/callback',
 );
 
 router.get('/logout', (req, res) => {
+    
   req.logout();
   res.redirect('http://localhost:4200');
 });
