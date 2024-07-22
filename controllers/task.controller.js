@@ -8,7 +8,7 @@ const fetchTaskList = async(req,res,next)=>{
         if(id){
             task = await findTaskById(id);
         }else{
-            task = await findTasksByCreatedBy(userId);
+            task = await findTasksByCreatedBy(userId,req.query);
         }
         if (!task) {
             return res.status(404).json({ message: 'Task not found' });
@@ -75,8 +75,22 @@ const createTask = async(req,res,next)=>{
         res.status(500).json({ message: err.message });
     }
 }
-const findTasksByCreatedBy = (createdBy)=>{
-    return Task.find({createdBy});
+const findTasksByCreatedBy = (createdBy,query)=>{
+    const { search , orderby } = query;
+    let sortOrder = {};
+    if (orderby === 'recent') {
+      sortOrder.createdAt = -1;
+    } else if (orderby === 'oldest') {
+      sortOrder.createdAt = 1;
+    }
+
+    let searchQuery = { createdBy: { $exists: true, $ne: null } };
+    
+    if (search) {
+      searchQuery.title = { $regex: search, $options: 'i' };
+    }
+
+    return Task.find(searchQuery).sort(sortOrder);
 }
 
 const findTaskById = (id)=>{
