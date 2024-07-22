@@ -58,7 +58,9 @@ const deleteTask = async(req,res,next)=>{
 const createTask = async(req,res,next)=>{
     try{
         const {title,description} = req.body;
-        const {userId} = req.headers;
+        const {userId,Userid} = req.headers;
+        console.log(" userid" , Userid, "----------", userId);
+        consol
         const task = new Task({
             title,
             description,
