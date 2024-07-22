@@ -1,8 +1,10 @@
 const Task = require("../models/Task");
+const {CustomError,BadRequestError} = require("../config/customError");
 
 const fetchTaskList = async(req,res,next)=>{
     const {id} = req.query;
-    const {userId} = req.headers;
+    const {userId} = req.user;
+    
     try{
         let task;
         if(id){
@@ -14,11 +16,11 @@ const fetchTaskList = async(req,res,next)=>{
             return res.status(404).json({ message: 'Task not found' });
         }
         res.status(200).send({
-            message : "Task/Tasks found",
+            message : "Tasks found",
             tasks : task
         });
     }catch(error){
-        res.status(500).json({ message: err.message });
+        next(error);
     }
 }
 
@@ -28,6 +30,7 @@ const updateTask = async(req,res,next)=>{
     const { id } = req.params;
 
     try {
+        if(!id) throw new BadRequestError("Invalid Payload")
         const updatedTask = await Task.findByIdAndUpdate(id, { title, description, status }, { new: true });
 
         if (!updatedTask) {
@@ -36,13 +39,15 @@ const updateTask = async(req,res,next)=>{
 
         res.status(200).json(updatedTask);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        next(err);
     }
 }
+
 const deleteTask = async(req,res,next)=>{
     const { id } = req.params;
 
     try {
+        if(!id) throw new BadRequestError("Invalid request");
         // Find the task by id and delete it
         const deletedTask = await Task.findByIdAndDelete(id);
 
@@ -50,20 +55,23 @@ const deleteTask = async(req,res,next)=>{
             return res.status(404).json({ message: 'Task not found' });
         }
 
-        res.json({ message: 'Task deleted successfully', deletedTask });
+        res.status(204).json({ message: 'Task deleted successfully', deletedTask });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        next(err);
     }
 }
+
 const createTask = async(req,res,next)=>{
     try{
         const {title,description} = req.body;
-        const {userid} = req.headers;
-        
+        const {userId} = req.user;
+        if(!title || !description)
+            throw new BadRequestError("Invalid payload");
+
         const task = new Task({
             title,
             description,
-            createdBy : userid
+            createdBy : userId
         });
         await task.save();
         res.status(200).send({
@@ -74,7 +82,7 @@ const createTask = async(req,res,next)=>{
             createdAt : task.createdAt
         })
     }catch(error){
-        res.status(500).json({ message: err.message });
+        next(error);
     }
 }
 const findTasksByCreatedBy = (createdBy,query)=>{
@@ -86,7 +94,7 @@ const findTasksByCreatedBy = (createdBy,query)=>{
       sortOrder.createdAt = 1;
     }
 
-    let searchQuery = { createdBy: { $exists: true, $ne: null } };
+    let searchQuery = { createdBy };
 
     if (search) {
       searchQuery.title = { $regex: search, $options: 'i' };

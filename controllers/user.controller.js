@@ -1,8 +1,13 @@
 const User = require("../models/User");
+const {CustomError,BadRequestError} = require("../config/customError");
+const jwt = require('jsonwebtoken');
 
 const registerUser = async(req,res,next)=>{
     try{
         const { firstName, lastName, emailAddress, password } = req.body;
+        if(!firstName || !lastName || !emailAddress || !password)
+            throw new BadRequestError("Invalid payload body");
+
         const newUser = new User({
             firstName,
             lastName,
@@ -10,41 +15,68 @@ const registerUser = async(req,res,next)=>{
             password
         });
         await newUser.save();
-        res.status(200).send({
+        
+        const token = jwt.sign({ 
+            id: newUser.id,
+            firstName: newUser.firstName,
+            lastName: newUser.lastName,
+            emailAddress: newUser.emailAddress 
+            }, process.env.JWT_SECRET, {
+            expiresIn: '1h',
+        });
+
+        res.status(201).send({
             message : "User Created",
             id : newUser.id,
             firstName : newUser.firstName,
             lastName : newUser.lastName,
-            emailAddress : newUser.emailAddress
+            emailAddress : newUser.emailAddress,
+            token
         });
     }catch(err){
-        res.status(500).json({ message: err.message });
+       next(err);
     }
 }
 
 const loginUser = async(req,res,next)=>{
     try{
         const { emailAddress, password } = req.body;
+        if(!emailAddress || !password)
+            throw new BadRequestError("Invalid payload");
+
         const user = await User.findOne({ emailAddress,password });
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            throw new CustomError("User Not Found",401);
         }
+
+        const token = jwt.sign({ 
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            emailAddress: user.emailAddress }, process.env.JWT_SECRET, {
+            expiresIn: '1h',
+        });
         res.status(200).json({
             message : "User Found",
             id: user.id,
             firstName: user.firstName,
             lastName: user.lastName,
-            emailAddress: user.emailAddress
+            emailAddress: user.emailAddress,
+            token
         });
     }catch(err){
-        res.status(500).json({ message: err.message });
+        next(err);
     }
 }
 
 const fetchUserDetails = async(req,res,next)=>{
     try{
         const {userId} =  req.params;
+        if(!userId)
+            throw new BadRequestError("Invalid User Id");
+
         const user = await User.findOne({id : userId});
+
         if(!user)
             return res.status(400).send({message : "User not found"});
         res.status(200).send({
@@ -55,7 +87,7 @@ const fetchUserDetails = async(req,res,next)=>{
             emailAddress: user.emailAddress
         });
     }catch(error){
-        res.status(500).send(error);
+        next(error);
     }
 }
 
