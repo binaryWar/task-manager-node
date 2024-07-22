@@ -58,10 +58,11 @@ const deleteTask = async(req,res,next)=>{
 const createTask = async(req,res,next)=>{
     try{
         const {title,description} = req.body;
-
+        const {userId} = req.headers;
         const task = new Task({
             title,
-            description
+            description,
+            createdBy : userId
         });
         await task.save();
         res.status(200).send({
@@ -85,7 +86,7 @@ const findTasksByCreatedBy = (createdBy,query)=>{
     }
 
     let searchQuery = { createdBy: { $exists: true, $ne: null } };
-    
+
     if (search) {
       searchQuery.title = { $regex: search, $options: 'i' };
     }
