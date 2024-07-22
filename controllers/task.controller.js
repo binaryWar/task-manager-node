@@ -58,18 +58,17 @@ const deleteTask = async(req,res,next)=>{
 const createTask = async(req,res,next)=>{
     try{
         const {title,description} = req.body;
-        const {userId,Userid} = req.headers;
-        console.log(" userid" , Userid, "----------", userId);
-        consol
+        const {userid} = req.headers;
+        
         const task = new Task({
             title,
             description,
-            createdBy : userId
+            createdBy : userid
         });
         await task.save();
         res.status(200).send({
             message : "Task Created",
-            id : task._id,
+            _id : task._id,
             title : task.title,
             description : task.description,
             createdAt : task.createdAt
