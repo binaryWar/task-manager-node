@@ -45,6 +45,7 @@ const loginUser = async(req,res,next)=>{
             throw new BadRequestError("Invalid payload");
 
         const user = await User.findOne({ emailAddress,password });
+        
         if (!user) {
             throw new CustomError("User Not Found",401);
         }
@@ -56,6 +57,7 @@ const loginUser = async(req,res,next)=>{
             emailAddress: user.emailAddress }, process.env.JWT_SECRET, {
             expiresIn: '1h',
         });
+
         res.status(200).json({
             message : "User Found",
             id: user.id,
