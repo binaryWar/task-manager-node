@@ -49,10 +49,10 @@ const verifyGoogleToken = async(req,res,next)=>{
 
         res.status(201).send({
             message : "Login Success!!",
-            id : newUser.id,
-            firstName : newUser.firstName,
-            lastName : newUser.lastName,
-            emailAddress : newUser.emailAddress,
+            id : user.id,
+            firstName : user.firstName,
+            lastName : user.lastName,
+            emailAddress : user.emailAddress,
             token
         })
     }catch(error){
